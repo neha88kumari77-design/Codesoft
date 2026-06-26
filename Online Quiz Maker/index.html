@@ -1,0 +1,238 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Quiz App</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            height: 100vh;
+            background: linear-gradient(135deg, #ff7eb3, #ff758c);
+            margin: 0;
+            overflow: hidden;
+        }
+        .quiz-container {
+            background: #fff;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 0 20px rgba(0, 0, 0, 0.3);
+            width: 90%;
+            max-width: 400px;
+            text-align: center;
+            opacity: 0;
+            transform: scale(0.5);
+            animation: fadeIn 1s ease-in-out forwards;
+        }
+        @keyframes fadeIn {
+            to {
+                opacity: 1;
+                transform: scale(1);
+            }
+        }
+        .question {
+            font-size: 20px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            animation: slideIn 0.5s ease-in-out;
+        }
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .options button {
+            display: block;
+            width: 100%;
+            padding: 12px;
+            margin: 8px 0;
+            border: none;
+            cursor: pointer;
+            background: #007bff;
+            color: white;
+            border-radius: 5px;
+            font-size: 16px;
+            transition: 0.3s;
+            animation: fadeInOptions 0.5s ease-in-out;
+        }
+        @keyframes fadeInOptions {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        .options button:hover {
+            background: #0056b3;
+        }
+        .correct {
+            background: #28a745 !important;
+            animation: correctAnswer 0.5s ease-in-out;
+        }
+        @keyframes correctAnswer {
+            0% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+            100% { transform: scale(1); }
+        }
+        .wrong {
+            background: #dc3545 !important;
+            animation: shake 0.3s;
+        }
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            25% { transform: translateX(-5px); }
+            50% { transform: translateX(5px); }
+            75% { transform: translateX(-5px); }
+        }
+        .question-indicators {
+            display: flex;
+            justify-content: center;
+            margin-top: 15px;
+            flex-wrap: wrap;
+        }
+        .circle {
+            width: 30px;
+            height: 30px;
+            margin: 5px;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            border-radius: 50%;
+            background: #ccc;
+            font-weight: bold;
+            color: white;
+            transition: 0.3s;
+            animation: fadeIn 0.5s ease-in-out;
+        }
+        .active {
+            background: #007bff !important;
+            transform: scale(1.2);
+        }
+        .result {
+            font-size: 22px;
+            font-weight: bold;
+            margin-top: 15px;
+            opacity: 0;
+            animation: fadeIn 1s ease-in-out forwards;
+        }
+        @media (max-width: 480px) {
+            .quiz-container {
+                width: 95%;
+                padding: 15px;
+            }
+            .question {
+                font-size: 18px;
+            }
+            .options button {
+                font-size: 14px;
+                padding: 10px;
+            }
+            .circle {
+                width: 25px;
+                height: 25px;
+                font-size: 14px;
+            }
+        }
+    </style>
+</head>
+<body>
+
+    <div class="quiz-container" id="quiz-container">
+        <div id="quiz">
+            <p class="question" id="question">Loading...</p>
+            <div class="options" id="options"></div>
+            <div class="question-indicators" id="indicators"></div>
+        </div>
+    </div>
+
+    <script>
+        const quizData = [
+            { question: "What is the capital of France?", options: ["Berlin", "Madrid", "Paris", "Rome"], answer: "Paris" },
+            { question: "Which language is used for web development?", options: ["Python", "Java", "C++", "JavaScript"], answer: "JavaScript" },
+            { question: "What is 2 + 2?", options: ["3", "4", "5", "6"], answer: "4" },
+            { question: "Which planet is known as the Red Planet?", options: ["Venus", "Mars", "Jupiter", "Saturn"], answer: "Mars" },
+            { question: "Which animal is known as the King of the Jungle?", options: ["Elephant", "Tiger", "Lion", "Bear"], answer: "Lion" },
+            { question: "What is the boiling point of water?", options: ["90°C", "100°C", "110°C", "120°C"], answer: "100°C" },
+            { question: "Which is the largest ocean on Earth?", options: ["Atlantic", "Indian", "Arctic", "Pacific"], answer: "Pacific" },
+            { question: "Who wrote 'Hamlet'?", options: ["Shakespeare", "Milton", "Hemingway", "Dickens"], answer: "Shakespeare" },
+            { question: "What is the currency of Japan?", options: ["Yuan", "Rupee", "Yen", "Won"], answer: "Yen" },
+            { question: "What is the chemical symbol for Gold?", options: ["Au", "Ag", "Fe", "Pb"], answer: "Au" },
+            { question: "Which gas do plants absorb?", options: ["Oxygen", "Carbon Dioxide", "Nitrogen", "Hydrogen"], answer: "Carbon Dioxide" },
+            { question: "What is the square root of 64?", options: ["6", "7", "8", "9"], answer: "8" },
+            { question: "How many continents are there?", options: ["5", "6", "7", "8"], answer: "7" }
+        ];
+
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        function loadQuestion() {
+            if (currentQuestionIndex >= quizData.length) {
+                document.getElementById("quiz-container").innerHTML = `
+                    <p class='result'>Quiz Over! 🎉 Your score: ${score}/${quizData.length}</p>
+                    <p class='result'>Refresh to Play Again!</p>
+                `;
+                return;
+            }
+
+            const currentQuestion = quizData[currentQuestionIndex];
+            document.getElementById("question").textContent = currentQuestion.question;
+            const optionsContainer = document.getElementById("options");
+            optionsContainer.innerHTML = "";
+
+            currentQuestion.options.forEach(option => {
+                const button = document.createElement("button");
+                button.textContent = option;
+                button.onclick = () => checkAnswer(button, option);
+                optionsContainer.appendChild(button);
+            });
+
+            updateIndicators();
+        }
+
+        function checkAnswer(button, selectedAnswer) {
+            const currentQuestion = quizData[currentQuestionIndex];
+
+            if (selectedAnswer === currentQuestion.answer) {
+                button.classList.add("correct");
+                score++;
+            } else {
+                button.classList.add("wrong");
+            }
+
+            setTimeout(() => {
+                currentQuestionIndex++;
+                loadQuestion();
+            }, 800);
+        }
+
+        function updateIndicators() {
+            const indicatorsContainer = document.getElementById("indicators");
+            indicatorsContainer.innerHTML = "";
+
+            quizData.forEach((_, index) => {
+                const circle = document.createElement("div");
+                circle.classList.add("circle");
+                circle.textContent = index + 1;
+                if (index === currentQuestionIndex) {
+                    circle.classList.add("active");
+                }
+                indicatorsContainer.appendChild(circle);
+            });
+        }
+
+        loadQuestion();
+    </script>
+
+</body>
+</html>
